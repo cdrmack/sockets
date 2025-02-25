@@ -41,6 +41,38 @@ int main(int artgc, char *argv[])
 
     puts("bind() call succeeded");
 
+    const int backlog = 20;
+    ret = listen(socket_descriptor, backlog);
+
+    if (ret == -1)
+    {
+        perror("listen() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    puts("listen() call succeeded");
+
+    int data_socket;
+    for (;;)
+    {
+        puts("waiting for accept()");
+
+        // blocking operation
+        data_socket = accept(socket_descriptor, NULL, NULL);
+        if (data_socket == -1)
+        {
+            perror("accept() failed");
+            exit(EXIT_FAILURE);
+        }
+
+        puts("connection accepted");
+
+        for (;;)
+        {
+            // TODO
+        }
+    }
+
     close(socket_descriptor);
 
     return EXIT_SUCCESS;
