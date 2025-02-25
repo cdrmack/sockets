@@ -11,7 +11,7 @@ all: server client
 server: server.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o server server.o
 
-server: client.o
+client: client.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o client client.o
 
 clean:

@@ -18,7 +18,7 @@ int main(int artgc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    puts("socket() call succeeded");
+    puts("[client] socket() call succeeded");
 
     struct sockaddr_un address;
     memset(&address, 0, sizeof(struct sockaddr_un));
@@ -36,7 +36,9 @@ int main(int artgc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    puts("connect() call succeeded");
+    puts("[client] connect() call succeeded");
+
+    // TODO
 
     return EXIT_SUCCESS;
 }
