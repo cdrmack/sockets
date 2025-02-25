@@ -5,11 +5,14 @@ CFLAGS = -std=c23 -g -Wall -Werror
 %.o:%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-all: server
+all: server client
 	@echo build complete
 
 server: server.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o server server.o
 
+server: client.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o client client.o
+
 clean:
-	rm -f server server.o
+	rm -f server client server.o client.o
