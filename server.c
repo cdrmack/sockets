@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define SOCKET_NAME "/tmp/foo_socket"
+#define BUFFER_SIZE 256
 
 int main(int artgc, char *argv[])
 {
@@ -15,7 +16,7 @@ int main(int artgc, char *argv[])
 
     if (socket_descriptor == -1)
     {
-        perror("socket() failed");
+        perror("[server] socket() failed");
         exit(EXIT_FAILURE);
     }
 
@@ -33,7 +34,7 @@ int main(int artgc, char *argv[])
 
     if (ret == -1)
     {
-        perror("bind() failed");
+        perror("[server] bind() failed");
         exit(EXIT_FAILURE);
     }
 
@@ -44,13 +45,15 @@ int main(int artgc, char *argv[])
 
     if (ret == -1)
     {
-        perror("listen() failed");
+        perror("[server] listen() failed");
         exit(EXIT_FAILURE);
     }
 
     puts("[server] listen() call succeeded");
 
     int data_socket;
+    char buffer[BUFFER_SIZE];
+
     for (;;)
     {
         puts("[server] waiting for accept()");
@@ -59,7 +62,7 @@ int main(int artgc, char *argv[])
         data_socket = accept(socket_descriptor, NULL, NULL);
         if (data_socket == -1)
         {
-            perror("accept() failed");
+            perror("[server] accept() failed");
             exit(EXIT_FAILURE);
         }
 
@@ -67,8 +70,28 @@ int main(int artgc, char *argv[])
 
         for (;;)
         {
-            // TODO
+            memset(buffer, 0, BUFFER_SIZE);
+
+            puts("[server] waiting for read()");
+            ret = read(data_socket, buffer, BUFFER_SIZE);
+
+            if (ret == -1)
+            {
+                perror("[server] read() failed");
+                exit(EXIT_FAILURE);
+            }
+
+            int read_value = 0;
+            memcpy(&read_value, buffer, sizeof(int));
+            printf("[server] received: %d\n", read_value);
+
+            if (read_value == 0)
+            {
+                break;
+            }
         }
+        // TODO, send result to the client
+        close(data_socket);
     }
 
     close(socket_descriptor);

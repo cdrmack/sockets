@@ -14,7 +14,7 @@ int main(int artgc, char *argv[])
 
     if (data_socket == -1)
     {
-        perror("socket() failed");
+        perror("[client] socket() failed");
         exit(EXIT_FAILURE);
     }
 
@@ -32,13 +32,29 @@ int main(int artgc, char *argv[])
 
     if (ret == -1)
     {
-        perror("connect() failed");
+        perror("[client] connect() failed");
         exit(EXIT_FAILURE);
     }
 
     puts("[client] connect() call succeeded");
 
-    // TODO
+    int number;
+    do
+    {
+        printf("[client] enter number to send to server: ");
+        scanf("%d", &number);
+
+        ret = write(data_socket, &number, sizeof(int));
+        if (ret == -1)
+        {
+            perror("[client] write() failed");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("[client] sent %d bytes, data sent = %d\n", ret, number);
+    } while (number);
+
+    // TODO, send 0 and wait for result from the server
 
     return EXIT_SUCCESS;
 }
