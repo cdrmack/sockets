@@ -6,11 +6,11 @@
 #include <unistd.h>
 
 #define SOCKET_NAME "/tmp/foo_socket"
+#define BUFFER_SIZE 256
 
 int main(int artgc, char *argv[])
 {
-    int data_socket;
-    data_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+    int data_socket = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (data_socket == -1)
     {
@@ -54,7 +54,20 @@ int main(int artgc, char *argv[])
         printf("[client] sent %d bytes, data sent = %d\n", ret, number);
     } while (number);
 
-    // TODO, send 0 and wait for result from the server
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    puts("[client] waiting for the result");
+    ret = read(data_socket, buffer, BUFFER_SIZE);
+
+    if (ret == -1)
+    {
+        perror("[client] read() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[client] received result: %s\n", buffer);
+
+    close(data_socket);
 
     return EXIT_SUCCESS;
 }

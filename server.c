@@ -51,8 +51,9 @@ int main(int artgc, char *argv[])
 
     puts("[server] listen() call succeeded");
 
-    int data_socket;
+    int data_socket = 0;
     char buffer[BUFFER_SIZE];
+    int result = 0;
 
     for (;;)
     {
@@ -73,6 +74,7 @@ int main(int artgc, char *argv[])
             memset(buffer, 0, BUFFER_SIZE);
 
             puts("[server] waiting for read()");
+            // blocking operation
             ret = read(data_socket, buffer, BUFFER_SIZE);
 
             if (ret == -1)
@@ -89,9 +91,24 @@ int main(int artgc, char *argv[])
             {
                 break;
             }
+
+            result += read_value;
         }
-        // TODO, send result to the client
+
+        memset(buffer, 0, BUFFER_SIZE);
+        sprintf(buffer, "Result = %d", result);
+
+        puts("[server] sending result");
+        ret = write(data_socket, buffer, BUFFER_SIZE);
+
+        if (ret == -1)
+        {
+            perror("[server] write() failed");
+            exit(EXIT_FAILURE);
+        }
+
         close(data_socket);
+        break;
     }
 
     close(socket_descriptor);
