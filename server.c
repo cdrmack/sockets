@@ -53,7 +53,6 @@ int main(int artgc, char *argv[])
 
     int data_socket = 0;
     char buffer[BUFFER_SIZE];
-    int result = 0;
 
     for (;;)
     {
@@ -69,6 +68,7 @@ int main(int artgc, char *argv[])
 
         puts("[server] connection accepted");
 
+        int result = 0;
         for (;;)
         {
             memset(buffer, 0, BUFFER_SIZE);
@@ -108,10 +108,11 @@ int main(int artgc, char *argv[])
         }
 
         close(data_socket);
-        break;
+        puts("[server] connection closed");
     }
 
     close(socket_descriptor);
+    unlink(SOCKET_NAME);
 
     return EXIT_SUCCESS;
 }
