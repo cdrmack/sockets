@@ -6,113 +6,79 @@
 #include <unistd.h>
 
 #define SOCKET_NAME "/tmp/foo_socket"
+#define SOCKET_ERROR (-1)
+#define BACKLOG 4
 #define BUFFER_SIZE 256
 
-int main(int artgc, char *argv[])
+typedef struct sockaddr_un SA_UN;
+typedef struct sockaddr SA;
+
+void handle_connection(int client_socket);
+void check(int result, const char *fn_name);
+
+int main(int argc, char *argv[])
 {
     unlink(SOCKET_NAME);
 
-    int socket_descriptor = socket(AF_UNIX, SOCK_STREAM, 0);
+    int server_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+    check(server_socket, "socket()");
 
-    if (socket_descriptor == -1)
+    SA_UN server_addr = {0};
+    server_addr.sun_family = AF_UNIX;
+    strncpy(server_addr.sun_path, SOCKET_NAME,
+            sizeof(server_addr.sun_path) - 1);
+
+    check(bind(server_socket, (SA *)&server_addr, sizeof(SA_UN)), "bind()");
+    check(listen(server_socket, BACKLOG), "listen()");
+
+    int client_socket = 0;
+
+    while (true)
     {
-        perror("[server] socket() failed");
-        exit(EXIT_FAILURE);
+        printf("[server] waiting for connection\n");
+        client_socket = accept(server_socket, NULL, NULL);
+        check(client_socket, "accept");
+
+        handle_connection(client_socket);
     }
-
-    puts("[server] socket() call succeeded");
-
-    struct sockaddr_un address;
-    memset(&address, 0, sizeof(struct sockaddr_un));
-
-    address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, SOCKET_NAME, sizeof(address.sun_path) - 1);
-    // address.sun_len is a legacy feature
-
-    int ret = bind(socket_descriptor, (struct sockaddr *)&address,
-                   sizeof(struct sockaddr_un));
-
-    if (ret == -1)
-    {
-        perror("[server] bind() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    puts("[server] bind() call succeeded");
-
-    const int backlog = 20;
-    ret = listen(socket_descriptor, backlog);
-
-    if (ret == -1)
-    {
-        perror("[server] listen() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    puts("[server] listen() call succeeded");
-
-    int data_socket = 0;
-    char buffer[BUFFER_SIZE];
-
-    for (;;)
-    {
-        puts("[server] waiting for accept()");
-
-        // blocking operation
-        data_socket = accept(socket_descriptor, NULL, NULL);
-        if (data_socket == -1)
-        {
-            perror("[server] accept() failed");
-            exit(EXIT_FAILURE);
-        }
-
-        puts("[server] connection accepted");
-
-        int result = 0;
-        for (;;)
-        {
-            memset(buffer, 0, BUFFER_SIZE);
-
-            puts("[server] waiting for read()");
-            // blocking operation
-            ret = read(data_socket, buffer, BUFFER_SIZE);
-
-            if (ret == -1)
-            {
-                perror("[server] read() failed");
-                exit(EXIT_FAILURE);
-            }
-
-            int read_value = 0;
-            memcpy(&read_value, buffer, sizeof(int));
-            printf("[server] received: %d\n", read_value);
-
-            if (read_value == 0)
-            {
-                break;
-            }
-
-            result += read_value;
-        }
-
-        memset(buffer, 0, BUFFER_SIZE);
-        sprintf(buffer, "Result = %d", result);
-
-        puts("[server] sending result");
-        ret = write(data_socket, buffer, BUFFER_SIZE);
-
-        if (ret == -1)
-        {
-            perror("[server] write() failed");
-            exit(EXIT_FAILURE);
-        }
-
-        close(data_socket);
-        puts("[server] connection closed");
-    }
-
-    close(socket_descriptor);
-    unlink(SOCKET_NAME);
 
     return EXIT_SUCCESS;
+}
+
+void handle_connection(int client_socket)
+{
+    char buffer[BUFFER_SIZE] = {0};
+    int received_data = 0;
+    int result = 0;
+
+    while (true)
+    {
+        check(read(client_socket, buffer, BUFFER_SIZE), "read()");
+        memcpy(&received_data, buffer, sizeof(int));
+        printf("[server] received %d\n", received_data);
+
+        if (received_data == 0)
+        {
+            break;
+        }
+
+        result += received_data;
+    }
+
+    memset(buffer, 0, BUFFER_SIZE);
+    sprintf(buffer, "result = %d", result);
+
+    check(write(client_socket, buffer, BUFFER_SIZE), "write()");
+    check(close(client_socket), "close()");
+}
+
+void check(int result, const char *fn_name)
+{
+    if (result == SOCKET_ERROR)
+    {
+        perror(fn_name);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[server] %s\n", fn_name);
 }
